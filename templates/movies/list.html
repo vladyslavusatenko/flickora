@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Movies - CineChat{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-4xl font-bold mb-2">Discover Movies</h1>
+    <p class="text-gray-400">Explore our collection of AI-analyzed films</p>
+</div>
+
+<!-- Search Bar -->
+<div class="mb-8">
+    <form method="GET" action="{% url 'movie_list' %}" class="max-w-2xl">
+        <div class="flex gap-2">
+            <input 
+                type="text" 
+                name="search" 
+                value="{{ search_query }}"
+                placeholder="Search movies by title or director..."
+                class="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-red-500"
+            >
+            <button type="submit" class="px-6 py-3 bg-red-500 hover:bg-red-600 rounded-lg transition">
+                Search
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Movies Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    {% for movie in movies %}
+    <a href="{% url 'movie_detail' movie.id %}" class="group">
+        <div class="bg-gray-800 rounded-lg overflow-hidden hover:ring-2 hover:ring-red-500 transition">
+            <!-- Poster -->
+            <div class="aspect-[2/3] bg-gray-700 relative overflow-hidden">
+                {% if movie.poster_url %}
+                    <img src="{{ movie.poster_url }}" 
+                         alt="{{ movie.title }}"
+                         class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-gray-500">
+                        No Poster
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Info -->
+            <div class="p-4">
+                <h3 class="font-bold text-lg mb-1 group-hover:text-red-500 transition truncate">
+                    {{ movie.title }}
+                </h3>
+                <div class="flex items-center justify-between text-sm text-gray-400">
+                    <span>{{ movie.year }}</span>
+                    {% if movie.imdb_rating %}
+                        <span class="flex items-center gap-1">
+                            ⭐ {{ movie.imdb_rating }}
+                        </span>
+                    {% endif %}
+                </div>
+                {% if movie.sections.count > 0 %}
+                    <div class="mt-2 text-xs text-green-400">
+                        ✓ AI Analysis Available
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </a>
+    {% empty %}
+    <div class="col-span-full text-center text-gray-400 py-12">
+        <p class="text-xl">No movies found</p>
+        <p class="mt-2">Try importing some movies first</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<div class="mt-8 flex justify-center gap-2">
+    {% if page_obj.has_previous %}
+        <a href="?page=1" class="px-4 py-2 bg-gray-800 rounded hover:bg-gray-700">First</a>
+        <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 bg-gray-800 rounded hover:bg-gray-700">Previous</a>
+    {% endif %}
+    
+    <span class="px-4 py-2 bg-red-500 rounded">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+    
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 bg-gray-800 rounded hover:bg-gray-700">Next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}" class="px-4 py-2 bg-gray-800 rounded hover:bg-gray-700">Last</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
