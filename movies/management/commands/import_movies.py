@@ -5,7 +5,7 @@ from services.tmdb_service import TMDBService
 class Command(BaseCommand):
     help = 'Import popular movies from TMDB'
     
-    def add_arguments(seld, parser):
+    def add_arguments(self, parser):
         parser.add_argument('--count', type=int, default = 20)
         parser.add_argument('--popular', action='store_true', help='Import popular movies')
         parser.add_argument('--top-rated', action='store_true', help='Import Top rated')
@@ -50,7 +50,7 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(f"Already exists: {movie.title}")
         
-        self.stdout.write(self.style.SUCCESS(f'Sccessfully imported {imported_count} new movies'))
+        self.stdout.write(self.style.SUCCESS(f'Successfully imported {imported_count} new movies'))
     
     def get_director(self, movie_data):
         if 'credits' in movie_data and 'crew' in movie_data['credits']:

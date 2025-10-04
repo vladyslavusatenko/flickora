@@ -10,7 +10,7 @@ def movie_list(request):
 def movie_detail(request, pk):
     movie = get_object_or_404(Movie, pk=pk)
     sections = movie.sections.all()
-    return render(request, 'movies/details.html', {
+    return render(request, 'movies/detail.html', {
         'movie': movie,
         'sections': sections
     })
