@@ -1,6 +1,6 @@
 import os
 import django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cinechat.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'flickora.settings')
 django.setup()
 
 from services.tmdb_service import TMDBService
