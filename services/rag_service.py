@@ -60,7 +60,7 @@ class RAGService:
         
         return results
     
-def search_with_scores(self, query, k=5, movie_id=None):
+    def search_with_scores(self, query, k=5, movie_id=None):
         """
         Search and return results with similarity scores
         

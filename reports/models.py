@@ -1,5 +1,6 @@
 from django.db import models
 from movies.models import Movie
+from pgvector.django import VectorField
 
 class MovieSection(models.Model):
     SECTION_TYPES = [
@@ -17,7 +18,7 @@ class MovieSection(models.Model):
     word_count = models.IntegerField(default=0)
     key_topics = models.JSONField(default=list, blank=True)  # For storing extracted topics
     generated_at = models.DateTimeField(auto_now_add=True)
-    embedding = models.TextField(default=0)
+    embedding = VectorField(dimensions=384, null=True, blank=True)
     
     class Meta:
         unique_together = ['movie', 'section_type']
