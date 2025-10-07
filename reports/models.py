@@ -17,11 +17,15 @@ class MovieSection(models.Model):
     word_count = models.IntegerField(default=0)
     key_topics = models.JSONField(default=list, blank=True)  # For storing extracted topics
     generated_at = models.DateTimeField(auto_now_add=True)
+    embedding = models.TextField(default=0)
     
     class Meta:
         unique_together = ['movie', 'section_type']
         ordering = ['movie', 'section_type']
-    
+        indexes = [
+            models.Index(fields=['section_type']),
+            models.Index(fields=['generated_at']),
+        ]
     def __str__(self):
         return f"{self.movie.title} - {self.get_section_type_display()}"
     

@@ -16,12 +16,8 @@ class ChatService:
         self.rag = RAGService()
         
     def chat(self, user_message, movie_id=None):
-        results = self.rag.search(user_message, k=3)
-        
-        from reports.models import MovieSection
-        sections = MovieSection.objects.filter(
-            id__in=[r['section_id'] for r in results]
-        ).select_related('movie')
+        results = self.rag.search_with_scores(user_message, k=3, movie_id=movie_id)
+        sections = [r['section'] for r in results]
         
         context = "\n---\n".join([
             f"[{s.movie.title} - {s.get_section_type_display()}]\n{s.content}"
@@ -31,7 +27,7 @@ class ChatService:
         if movie_id:
             from movies.models import Movie
             movie = Movie.objects.get(id=movie_id)
-            system_prompt = f"""You are discussing "{movie.title}" {{movie.year}}.
+            system_prompt = f"""You are discussing "{movie.title}" ({movie.year}).
 
 Context from the movie:
 {context}

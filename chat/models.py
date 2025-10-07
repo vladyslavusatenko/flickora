@@ -5,7 +5,7 @@ from movies.models import Movie
 class ChatConversation(models.Model):
     CONVERSATION_TYPES = [
         ('global', 'Global Chat'),
-        {'movie', 'Movie-Specific Chat'},
+        ('movie', 'Movie-Specific Chat'),
     ]
     
     conversation_type = models.CharField(max_length=20, choices=CONVERSATION_TYPES)

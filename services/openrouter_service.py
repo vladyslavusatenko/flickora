@@ -10,7 +10,7 @@ class OpenRouterService:
             base_url="https://openrouter.ai/api/v1",
             api_key=settings.OPENROUTER_API_KEY
         )
-        self.model = "deepseek/deepseek-chat-v3.1:free"  # Your chosen free model
+        self.model = "alibaba/tongyi-deepresearch-30b-a3b:free"  
     
     def generate_movie_section(self, movie_data, section_type):
         """Generate a 500-word analysis section for a movie"""
@@ -23,7 +23,7 @@ class OpenRouterService:
                     {"role": "system", "content": "You are an expert film critic writing professional movie analysis."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=800,  # Slightly higher for 500 words
+                max_tokens=800,  
                 temperature=0.7
             )
             
