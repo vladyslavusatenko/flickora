@@ -1,21 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import ListView, DetailView
-from django.db.models import Q
-from .models import Movie
-
-def movie_list(request):
-    movies = Movie.objects.all()[:20]
-    return render(request, 'movies/list.html', {'movies':movies})
-
-def movie_detail(request, pk):
-    movie = get_object_or_404(Movie, pk=pk)
-    sections = movie.sections.all()
-    return render(request, 'movies/detail.html', {
-        'movie': movie,
-        'sections': sections
-    })
-
-# Create your views here.
+from django.db.models import Q, Count
+from .models import Movie, Genre
 
 class MovieListView(ListView):
     model = Movie
@@ -24,7 +10,7 @@ class MovieListView(ListView):
     paginate_by = 20
     
     def get_queryset(self):
-        queryset = Movie.objects.all().prefetch_related('sections')
+        queryset = Movie.objects.all().prefetch_related('sections', 'genres')
         
         search_query = self.request.GET.get('search', '')
         if search_query:
@@ -33,11 +19,28 @@ class MovieListView(ListView):
                 Q(director__icontains=search_query)
             )
         
+        genre_filter = self.request.GET.get('genre')
+        if genre_filter:
+            queryset = queryset.filter(genres__tmdb_id=genre_filter).distinct()
+        
+        year_filter = self.request.GET.get('year')
+        if year_filter and year_filter != 'all':
+            queryset = queryset.filter(year=year_filter)
+        
         return queryset.order_by('-year', 'title')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search_query'] = self.request.GET.get('search', '')
+        context['selected_genre'] = self.request.GET.get('genre', '')
+        context['selected_year'] = self.request.GET.get('year', 'all')
+        
+        context['all_genres'] = Genre.objects.annotate(
+            movie_count=Count('movies')
+        ).filter(movie_count__gt=0).order_by('name')
+        
+        context['all_years'] = Movie.objects.values_list('year', flat=True).distinct().order_by('-year')
+        
         return context
 
 class MovieDetailView(DetailView):

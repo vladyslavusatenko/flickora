@@ -18,7 +18,6 @@ class Command(BaseCommand):
         openrouter = OpenRouterService()
         rag = RAGService()
         
-        # Get movies to process
         if options['movie_id']:
             movies = Movie.objects.filter(id=options['movie_id'])
         elif options['all']:
@@ -48,12 +47,11 @@ class Command(BaseCommand):
                 'title': movie.title,
                 'year': movie.year,
                 'director': movie.director,
-                'genre': movie.genre,
+                'genres': ', '.join([g.name for g in movie.genres.all()]),
                 'plot_summary': movie.plot_summary
             }
             
             for section_type in section_types:
-                # Check if section already exists
                 if MovieSection.objects.filter(movie=movie, section_type=section_type).exists():
                     self.stdout.write(f"  - {section_type}: already exists")
                     continue
@@ -61,44 +59,37 @@ class Command(BaseCommand):
                 try:
                     self.stdout.write(f"  - Generating {section_type}...")
                     
-                    # Generate content
                     content = openrouter.generate_movie_section(movie_data, section_type)
-                    print(1)
+                    
                     if content:
-                        # Generate embedding
                         embedding = None
-                        print(2)
+                        
                         if not options['skip_embeddings']:
-                            print(3)
-                            
                             self.stdout.write(f"    - Generating embedding...")
                             embedding = rag.generate_embedding(content)
-                        print(4)
-                        # Create section with embedding
+                        
                         MovieSection.objects.create(
                             movie=movie,
                             section_type=section_type,
                             content=content,
                             embedding=embedding
                         )
-                        print(5)
+                        
                         total_generated += 1
+                        emb_status = 'yes' if embedding is not None else 'no'
                         self.stdout.write(self.style.SUCCESS(
-                            f"    ✓ Generated ({len(content.split())} words, embedding: {'yes' if embedding.all() else 'no'})"
+                            f"    ✓ Generated ({len(content.split())} words, embedding: {emb_status})"
                         ))
-                        print(6)
                     else:
                         self.stdout.write(self.style.ERROR(f"    ✗ Failed to generate"))
-                        print(7)
-                    # Rate limiting - wait 1 second between API calls
-                    time.sleep(8)
-                    print(9)
+                    
+                    time.sleep(1)
+                    
                 except Exception as e:
                     self.stdout.write(self.style.ERROR(f"    ✗ Error: {e}"))
         
         self.stdout.write(self.style.SUCCESS(f"\nTotal sections generated: {total_generated}"))
         
-        # Verify embeddings
         total_sections = MovieSection.objects.count()
         sections_with_embeddings = MovieSection.objects.filter(embedding__isnull=False).count()
         self.stdout.write(f"\nEmbedding stats: {sections_with_embeddings}/{total_sections} sections have embeddings")

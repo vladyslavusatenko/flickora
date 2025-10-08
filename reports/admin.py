@@ -25,8 +25,7 @@ class MovieSectionAdmin(admin.ModelAdmin):
     ]
     
     def embedding_status(self, obj):
-        """Display embedding status with visual indicator"""
-        if obj.embedding:
+        if obj.embedding is not None and len(obj.embedding) > 0:
             return format_html(
                 '<span style="color: green; font-weight: bold;">✅ Yes</span>'
             )
@@ -37,21 +36,19 @@ class MovieSectionAdmin(admin.ModelAdmin):
     embedding_status.short_description = 'Has Embedding'
     
     def content_preview(self, obj):
-        """Show first 500 characters of content"""
         preview = obj.content[:500] + '...' if len(obj.content) > 500 else obj.content
         return format_html('<p style="white-space: pre-wrap;">{}</p>', preview)
     
     content_preview.short_description = 'Content Preview'
     
     def embedding_info(self, obj):
-        """Show embedding details"""
-        if not obj.embedding:
+        if obj.embedding is None or len(obj.embedding) == 0:
             return format_html('<p style="color: red;">No embedding generated</p>')
         
-        if isinstance(obj.embedding, list):
+        try:
             dim = len(obj.embedding)
-            sample = obj.embedding[:5]
-        else:
+            sample = obj.embedding[:5].tolist() if hasattr(obj.embedding, 'tolist') else list(obj.embedding[:5])
+        except (TypeError, AttributeError):
             return format_html('<p style="color: gray;">Embedding format: {}</p>', type(obj.embedding).__name__)
         
         html = f'<p><strong>Dimensions:</strong> {dim}</p>'
@@ -60,8 +57,6 @@ class MovieSectionAdmin(admin.ModelAdmin):
         return format_html(html)
     
     embedding_info.short_description = 'Embedding Info'
-    
-    # Admin Actions
     
     @admin.action(description='🔧 Regenerate embeddings for selected sections')
     def regenerate_embeddings(self, request, queryset):
@@ -103,7 +98,7 @@ class MovieSectionAdmin(admin.ModelAdmin):
     def delete_embeddings(self, request, queryset):
         count = 0
         for section in queryset:
-            if section.embedding:
+            if section.embedding is not None and len(section.embedding) > 0:
                 section.embedding = None
                 section.save(update_fields=['embedding'])
                 count += 1

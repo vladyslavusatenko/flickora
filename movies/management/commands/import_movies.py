@@ -1,12 +1,12 @@
 from django.core.management.base import BaseCommand
-from movies.models import Movie
+from movies.models import Movie, Genre
 from services.tmdb_service import TMDBService
 
 class Command(BaseCommand):
     help = 'Import popular movies from TMDB'
     
     def add_arguments(self, parser):
-        parser.add_argument('--count', type=int, default = 20)
+        parser.add_argument('--count', type=int, default=20)
         parser.add_argument('--popular', action='store_true', help='Import popular movies')
         parser.add_argument('--top-rated', action='store_true', help='Import Top rated')
         
@@ -29,13 +29,13 @@ class Command(BaseCommand):
             detailed_data = tmdb.get_movie_details(movie_data['id'])
             if not detailed_data:
                 continue
+            
             movie, created = Movie.objects.get_or_create(
                 tmdb_id=movie_data['id'],
                 defaults={
                     'title': detailed_data['title'],
                     'year': int(detailed_data['release_date'][:4]) if detailed_data.get('release_date') else 2024,
                     'director': self.get_director(detailed_data),
-                    'genre': ', '.join([g['name'] for g in detailed_data.get('genres', [])[:3]]),
                     'plot_summary': detailed_data.get('overview', ''),
                     'runtime': detailed_data.get('runtime'),
                     'imdb_rating': detailed_data.get('vote_average'),
@@ -43,6 +43,13 @@ class Command(BaseCommand):
                     'backdrop_url': f"https://image.tmdb.org/t/p/w1280{detailed_data['backdrop_path']}" if detailed_data.get('backdrop_path') else '',
                 }
             )
+            
+            for genre_data in detailed_data.get('genres', []):
+                genre, _ = Genre.objects.get_or_create(
+                    tmdb_id=genre_data['id'],
+                    defaults={'name': genre_data['name']}
+                )
+                movie.genres.add(genre)
             
             if created:
                 imported_count += 1

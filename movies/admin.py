@@ -4,7 +4,23 @@ from django.utils.html import format_html
 from django.shortcuts import redirect
 from django.urls import path
 from django.contrib import messages
-from .models import Movie
+from .models import Movie, Genre
+
+
+@admin.register(Genre)
+class GenreAdmin(admin.ModelAdmin):
+    list_display = ['id', 'name', 'tmdb_id', 'movie_count']
+    search_fields = ['name']
+    ordering = ['name']
+    
+    def movie_count(self, obj):
+        count = obj.movies.count()
+        return format_html(
+            '<span style="color: {};">{} movies</span>',
+            'green' if count > 0 else 'gray',
+            count
+        )
+    movie_count.short_description = 'Movies'
 
 
 @admin.register(Movie)
@@ -14,14 +30,15 @@ class MovieAdmin(admin.ModelAdmin):
         'title', 
         'year', 
         'director', 
-        'genre', 
+        'genre_display',
         'imdb_rating',
         'section_status',
         'embedding_status'
     ]
-    list_filter = ['year', 'genre']
+    list_filter = ['year', 'genres']
     search_fields = ['title', 'director']
     readonly_fields = ['created_at', 'updated_at', 'report_details']
+    filter_horizontal = ['genres']
     ordering = ['id']
     actions = [
         'generate_reports_action',
@@ -32,7 +49,7 @@ class MovieAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
-        queryset = queryset.annotate(
+        queryset = queryset.prefetch_related('genres').annotate(
             total_sections=Count('sections'),
             sections_with_embeddings=Count(
                 'sections',
@@ -41,8 +58,19 @@ class MovieAdmin(admin.ModelAdmin):
         )
         return queryset
     
+    def genre_display(self, obj):
+        genres = obj.genres.all()[:3]
+        if not genres:
+            return format_html('<span style="color: gray;">-</span>')
+        
+        genre_names = ', '.join([g.name for g in genres])
+        if obj.genres.count() > 3:
+            genre_names += f' (+{obj.genres.count() - 3})'
+        
+        return format_html('<span>{}</span>', genre_names)
+    genre_display.short_description = 'Genres'
+    
     def section_status(self, obj):
-        """Display section count with color coding"""
         total = obj.total_sections if hasattr(obj, 'total_sections') else obj.sections.count()
         
         if total == 0:
@@ -63,7 +91,6 @@ class MovieAdmin(admin.ModelAdmin):
     section_status.admin_order_field = 'total_sections'
     
     def embedding_status(self, obj):
-        """Display embedding status"""
         total = obj.total_sections if hasattr(obj, 'total_sections') else obj.sections.count()
         with_emb = obj.sections_with_embeddings if hasattr(obj, 'sections_with_embeddings') else obj.sections.filter(embedding__isnull=False).count()
         
@@ -79,7 +106,6 @@ class MovieAdmin(admin.ModelAdmin):
     embedding_status.short_description = 'Embeddings'
     
     def report_details(self, obj):
-        """Show detailed report breakdown"""
         sections = obj.sections.all()
         
         if not sections:
@@ -89,15 +115,14 @@ class MovieAdmin(admin.ModelAdmin):
         html += '<tr style="background: #f0f0f0;"><th>Section Type</th><th>Words</th><th>Embedding</th></tr>'
         
         for section in sections:
-            emb_status = '✅' if section.embedding else '❌'
+            has_emb = section.embedding is not None and len(section.embedding) > 0
+            emb_status = '✅' if has_emb else '❌'
             html += f'<tr><td>{section.get_section_type_display()}</td><td>{section.word_count}</td><td>{emb_status}</td></tr>'
         
         html += '</table>'
         return format_html(html)
     
     report_details.short_description = 'Report Details'
-    
-    # Custom Admin Actions
     
     @admin.action(description='🔄 Generate reports for selected movies')
     def generate_reports_action(self, request, queryset):
@@ -108,7 +133,6 @@ class MovieAdmin(admin.ModelAdmin):
         
         for movie in queryset:
             try:
-                # Call management command
                 out = io.StringIO()
                 call_command('generate_reports', movie_id=movie.id, stdout=out)
                 
@@ -177,7 +201,7 @@ class MovieAdmin(admin.ModelAdmin):
         for movie in queryset:
             sections = movie.sections.all()
             for section in sections:
-                if section.embedding:
+                if section.embedding is not None and len(section.embedding) > 0:
                     section.embedding = None
                     section.save(update_fields=['embedding'])
                     total_deleted += 1

@@ -3,7 +3,6 @@
 {% block title %}{{ movie.title }} - flickora{% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
 <div class="relative mb-8">
     {% if movie.backdrop_url %}
     <div class="absolute inset-0 -z-10">
@@ -14,7 +13,6 @@
     {% endif %}
     
     <div class="flex flex-col md:flex-row gap-8 py-8">
-        <!-- Poster -->
         <div class="flex-shrink-0">
             <div class="w-64 aspect-[2/3] bg-gray-800 rounded-lg overflow-hidden">
                 {% if movie.poster_url %}
@@ -29,7 +27,6 @@
             </div>
         </div>
         
-        <!-- Info -->
         <div class="flex-1">
             <h1 class="text-4xl font-bold mb-2">{{ movie.title }}</h1>
             <div class="flex flex-wrap gap-4 text-gray-400 mb-4">
@@ -37,15 +34,23 @@
                 {% if movie.runtime %}
                     <span>{{ movie.runtime }} min</span>
                 {% endif %}
-                {% if movie.genre %}
-                    <span>{{ movie.genre }}</span>
-                {% endif %}
                 {% if movie.imdb_rating %}
                     <span class="flex items-center gap-1">
                         ⭐ {{ movie.imdb_rating }}/10
                     </span>
                 {% endif %}
             </div>
+            
+            {% if movie.genres.exists %}
+            <div class="flex flex-wrap gap-2 mb-4">
+                {% for genre in movie.genres.all %}
+                <a href="{% url 'movie_list' %}?genre={{ genre.tmdb_id }}" 
+                   class="px-3 py-1 bg-red-500 hover:bg-red-600 rounded text-sm transition">
+                    {{ genre.name }}
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
             
             {% if movie.director %}
             <p class="text-lg mb-4">
@@ -68,7 +73,6 @@
     </div>
 </div>
 
-<!-- AI Analysis Sections -->
 <div id="analysis" class="space-y-8">
     <h2 class="text-3xl font-bold mb-6">AI-Generated Analysis</h2>
     
@@ -95,7 +99,6 @@
     {% endif %}
 </div>
 
-<!-- Back Button -->
 <div class="mt-8">
     <a href="{% url 'movie_list' %}" class="inline-block px-6 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition">
         ← Back to Movies
