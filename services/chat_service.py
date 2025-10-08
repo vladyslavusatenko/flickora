@@ -12,7 +12,7 @@ class ChatService:
             base_url="https://openrouter.ai/api/v1",
             api_key=settings.OPENROUTER_API_KEY
         )
-        self.model = "deepseek/deepseek-chat-v3.1:free"
+        self.model = "meta-llama/llama-4-maverick:free"
         self.rag = RAGService()
         
     def chat(self, user_message, movie_id=None):
