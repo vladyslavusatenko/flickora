@@ -5,7 +5,7 @@ import time
 BASE_URL = "http://localhost:8000"
 
 def test_api():
-    print("🧪 Testing CineChat API for N8N automation\n")
+    print("🧪 Testing flickora API for N8N automation\n")
     
     # Test 1: Get movies without reports
     print("1️⃣ Fetching movies without complete reports...")

@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Genre(models.Model):
     tmdb_id = models.IntegerField(unique=True)
@@ -33,3 +34,16 @@ class Movie(models.Model):
     @property
     def genre_list(self):
         return ", ".join([g.name for g in self.genres.all()])
+
+
+class MovieView(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='movie_views')
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='views')
+    viewed_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-viewed_at']
+        unique_together = ['user', 'movie']
+    
+    def __str__(self):
+        return f"{self.user.username} viewed {self.movie.title}"

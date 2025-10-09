@@ -4,7 +4,7 @@ from django.utils.html import format_html
 from django.shortcuts import redirect
 from django.urls import path
 from django.contrib import messages
-from .models import Movie, Genre
+from .models import Movie, Genre, MovieView
 
 
 @admin.register(Genre)
@@ -23,6 +23,15 @@ class GenreAdmin(admin.ModelAdmin):
     movie_count.short_description = 'Movies'
 
 
+@admin.register(MovieView)
+class MovieViewAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user', 'movie', 'viewed_at']
+    list_filter = ['viewed_at', 'user']
+    search_fields = ['user__username', 'movie__title']
+    readonly_fields = ['viewed_at']
+    ordering = ['-viewed_at']
+
+
 @admin.register(Movie)
 class MovieAdmin(admin.ModelAdmin):
     list_display = [
@@ -32,12 +41,13 @@ class MovieAdmin(admin.ModelAdmin):
         'director', 
         'genre_display',
         'imdb_rating',
+        'view_count',
         'section_status',
         'embedding_status'
     ]
     list_filter = ['year', 'genres']
     search_fields = ['title', 'director']
-    readonly_fields = ['created_at', 'updated_at', 'report_details']
+    readonly_fields = ['created_at', 'updated_at', 'report_details', 'view_stats']
     filter_horizontal = ['genres']
     ordering = ['id']
     actions = [
@@ -54,7 +64,8 @@ class MovieAdmin(admin.ModelAdmin):
             sections_with_embeddings=Count(
                 'sections',
                 filter=Q(sections__embedding__isnull=False)
-            )
+            ),
+            total_views=Count('views')
         )
         return queryset
     
@@ -69,6 +80,16 @@ class MovieAdmin(admin.ModelAdmin):
         
         return format_html('<span>{}</span>', genre_names)
     genre_display.short_description = 'Genres'
+    
+    def view_count(self, obj):
+        count = obj.total_views if hasattr(obj, 'total_views') else obj.views.count()
+        return format_html(
+            '<span style="color: {};">{} views</span>',
+            'green' if count > 0 else 'gray',
+            count
+        )
+    view_count.short_description = 'Views'
+    view_count.admin_order_field = 'total_views'
     
     def section_status(self, obj):
         total = obj.total_sections if hasattr(obj, 'total_sections') else obj.sections.count()
@@ -104,6 +125,28 @@ class MovieAdmin(admin.ModelAdmin):
             return format_html('<span style="color: red;">❌ 0/{}</span>', total)
     
     embedding_status.short_description = 'Embeddings'
+    
+    def view_stats(self, obj):
+        views = obj.views.all().select_related('user')[:10]
+        
+        if not views:
+            return format_html('<p style="color: gray;">No views yet</p>')
+        
+        html = '<table style="width: 100%; border-collapse: collapse;">'
+        html += '<tr style="background: #f0f0f0;"><th>User</th><th>Viewed At</th></tr>'
+        
+        for view in views:
+            html += f'<tr><td>{view.user.username}</td><td>{view.viewed_at.strftime("%Y-%m-%d %H:%M")}</td></tr>'
+        
+        html += '</table>'
+        
+        total = obj.views.count()
+        if total > 10:
+            html += f'<p style="margin-top: 10px;">... and {total - 10} more views</p>'
+        
+        return format_html(html)
+    
+    view_stats.short_description = 'Recent Views'
     
     def report_details(self, obj):
         sections = obj.sections.all()

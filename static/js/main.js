@@ -1,4 +1,3 @@
-// CineChat - Main JavaScript
 
 // Genre submenu toggle
 const genresToggle = document.getElementById('genresToggle');

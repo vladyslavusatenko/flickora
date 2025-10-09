@@ -1,7 +1,31 @@
-from django.shortcuts import render, get_object_or_404
-from django.views.generic import ListView, DetailView
+from django.shortcuts import render, get_object_or_404, redirect
+from django.views.generic import ListView, DetailView, TemplateView, CreateView
+from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth import login
 from django.db.models import Q, Count
-from .models import Movie, Genre
+from django.urls import reverse_lazy
+from .models import Movie, Genre, MovieView
+from .forms import RegisterForm, LoginForm
+
+class HomeView(TemplateView):
+    template_name = 'home.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['trending_movies'] = Movie.objects.all().order_by('-created_at')[:8]
+        
+        if self.request.user.is_authenticated:
+            recent_views = MovieView.objects.filter(user=self.request.user).select_related('movie')[:5]
+            context['recently_viewed'] = [view.movie for view in recent_views]
+        else:
+            context['recently_viewed'] = []
+        
+        context['popular_questions'] = [
+            "What are the best sci-fi movies of 2024?",
+            "Recommend movies similar to Christopher Nolan films",
+            "What's trending in horror movies right now?"
+        ]
+        return context
 
 class MovieListView(ListView):
     model = Movie
@@ -51,4 +75,35 @@ class MovieDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['sections'] = self.object.sections.all().order_by('section_type')
+        
+        if self.request.user.is_authenticated:
+            MovieView.objects.update_or_create(
+                user=self.request.user,
+                movie=self.object
+            )
+        
         return context
+
+
+class RegisterView(CreateView):
+    form_class = RegisterForm
+    template_name = 'auth/register.html'
+    success_url = reverse_lazy('home')
+    
+    def form_valid(self, form):
+        user = form.save()
+        login(self.request, user)
+        return redirect(self.success_url)
+
+
+class CustomLoginView(LoginView):
+    form_class = LoginForm
+    template_name = 'auth/login.html'
+    redirect_authenticated_user = True
+    
+    def get_success_url(self):
+        return reverse_lazy('home')
+
+
+class CustomLogoutView(LogoutView):
+    next_page = reverse_lazy('home')
