@@ -1,191 +1,163 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}flickora - AI Movie Discovery{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body class="bg-gray-900 text-white min-h-screen">
-    <nav class="bg-gray-800 border-b border-gray-700">
-      <div class="container mx-auto px-4 py-4">
-        <div class="flex items-center justify-between">
-          <a
-            href="{% url 'movie_list' %}"
-            class="text-2xl font-bold text-red-500"
-          >
-            🎬 flickora
-          </a>
-          <div class="flex gap-6">
-            <a
-              href="{% url 'movie_list' %}"
-              class="hover:text-red-500 transition"
-              >Movies</a
-            >
-            <a href="/admin/" class="hover:text-red-500 transition">Admin</a>
-          </div>
-        </div>
-      </div>
-    </nav>
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+<body>
+    <div class="layout-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <!-- Logo -->
+            <div class="sidebar-logo">
+                <svg class="sidebar-logo-icon" fill="currentColor" viewBox="0 0 24 24">
+                    <rect x="2" y="2" width="20" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <rect x="7" y="7" width="4" height="10"/>
+                    <rect x="13" y="7" width="4" height="10"/>
+                </svg>
+                <span class="sidebar-logo-text">flickora</span>
+            </div>
 
-    <main class="container mx-auto px-4 py-8">
-      {% block content %}{% endblock %}
-    </main>
+            <!-- Navigation -->
+            <nav class="sidebar-nav">
+                <!-- Home -->
+                <a href="{% url 'movie_list' %}" class="nav-link {% if request.resolver_match.url_name == 'movie_list' %}active{% endif %}">
+                    <svg class="nav-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    <span>Home</span>
+                </a>
 
-    <button
-      id="chatToggle"
-      class="fixed bottom-6 right-6 w-14 h-14 bg-red-500 hover:bg-red-600 rounded-full shadow-lg flex items-center justify-center transition z-50"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-6 w-6"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-        />
-      </svg>
-    </button>
+                <!-- Browse Movies -->
+                <a href="{% url 'movie_list' %}" class="nav-link">
+                    <svg class="nav-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                    </svg>
+                    <span>Browse Movies</span>
+                </a>
 
-    <div
-      id="chatWindow"
-      class="fixed bottom-24 right-6 w-96 h-[600px] bg-gray-800 rounded-lg shadow-2xl hidden flex-col z-50"
-    >
-      <div
-        class="p-4 bg-red-500 rounded-t-lg flex items-center justify-between"
-      >
-        <h3 class="font-bold text-lg">🤖 AI Movie Chat</h3>
-        <button id="chatClose" class="hover:bg-red-600 rounded p-1">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fill-rule="evenodd"
-              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-              clip-rule="evenodd"
-            />
-          </svg>
-        </button>
-      </div>
+                <!-- Trending -->
+                <a href="#" class="nav-link">
+                    <svg class="nav-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                    </svg>
+                    <span>Trending</span>
+                </a>
 
-      <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-4">
-        <div class="bg-gray-700 rounded-lg p-3 text-sm">
-          <p class="text-gray-300">👋 Hi! Ask me anything about movies.</p>
-        </div>
-      </div>
+                <!-- Favorites -->
+                <a href="#" class="nav-link">
+                    <svg class="nav-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                    <span>Favorites</span>
+                </a>
 
-      <form id="chatForm" class="p-4 border-t border-gray-700">
-        <div class="flex gap-2">
-          <input
-            type="text"
-            id="chatInput"
-            placeholder="Ask about movies..."
-            class="flex-1 px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-            autocomplete="off"
-          />
-          <button
-            type="submit"
-            class="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg transition"
-          >
-            Send
-          </button>
-        </div>
-      </form>
+                <!-- Recent Chats -->
+                <a href="#" class="nav-link">
+                    <svg class="nav-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>Recent Chats</span>
+                </a>
+
+                <div class="nav-divider"></div>
+
+                <!-- Genres (collapsible) -->
+                <div class="nav-link nav-link-with-submenu" id="genresToggle">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <svg class="nav-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                        </svg>
+                        <span>Genres</span>
+                    </div>
+                    <svg class="submenu-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </div>
+
+                <div class="nav-submenu" id="genresSubmenu">
+                    <a href="?genre=action" class="nav-submenu-link">Action</a>
+                    <a href="?genre=comedy" class="nav-submenu-link">Comedy</a>
+                    <a href="?genre=drama" class="nav-submenu-link">Drama</a>
+                    <a href="?genre=horror" class="nav-submenu-link">Horror</a>
+                    <a href="?genre=romance" class="nav-submenu-link">Romance</a>
+                    <a href="?genre=scifi" class="nav-submenu-link">Sci-Fi</a>
+                    <a href="?genre=thriller" class="nav-submenu-link">Thriller</a>
+                </div>
+
+                <div class="nav-divider"></div>
+
+                <!-- Global Chat -->
+                <a href="#" class="nav-link">
+                    <svg class="nav-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                    <span>Global Chat</span>
+                </a>
+
+                <!-- Settings -->
+                <a href="#" class="nav-link">
+                    <svg class="nav-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="search-bar">
+                    <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" class="search-input" placeholder="Search movies, shows, or discussions...">
+                </div>
+
+                <div class="header-actions">
+                    <button class="header-btn">
+                        <svg class="header-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <span>Add to Desktop</span>
+                    </button>
+
+                    <button class="header-btn">
+                        <svg class="header-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                        </svg>
+                    </button>
+
+                    <button class="header-btn">
+                        <svg class="header-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                    </button>
+
+                    <button class="header-btn">
+                        <svg class="header-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </button>
+
+                    <div class="user-avatar">U</div>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="content-area">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
     </div>
 
-    <footer class="bg-gray-800 border-t border-gray-700 mt-20">
-      <div class="container mx-auto px-4 py-6 text-center text-gray-400">
-        <p>flickora - AI-Powered Movie Discovery & Analysis</p>
-      </div>
-    </footer>
-
-    <script>
-      const chatToggle = document.getElementById("chatToggle");
-      const chatWindow = document.getElementById("chatWindow");
-      const chatClose = document.getElementById("chatClose");
-      const chatForm = document.getElementById("chatForm");
-      const chatInput = document.getElementById("chatInput");
-      const chatMessages = document.getElementById("chatMessages");
-
-      chatToggle.addEventListener("click", () => {
-        chatWindow.classList.remove("hidden");
-        chatWindow.classList.add("flex");
-        chatInput.focus();
-      });
-
-      chatClose.addEventListener("click", () => {
-        chatWindow.classList.add("hidden");
-        chatWindow.classList.remove("flex");
-      });
-
-      chatForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        const message = chatInput.value.trim();
-        if (!message) return;
-
-        addMessage(message, "user");
-        chatInput.value = "";
-
-        const movieId = window.location.pathname.includes("/movie/")
-          ? window.location.pathname.split("/movie/")[1].split("/")[0]
-          : null;
-
-        try {
-          const response = await fetch("/chat/message/", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              message: message,
-              movie_id: movieId ? parseInt(movieId) : null,
-            }),
-          });
-
-          const data = await response.json();
-
-          if (response.ok) {
-            addMessage(data.message, "assistant", data.sources);
-          } else {
-            addMessage("Sorry, something went wrong.", "assistant");
-          }
-        } catch (error) {
-          addMessage("Error connecting to chat service.", "assistant");
-        }
-      });
-
-      function addMessage(content, role, sources = []) {
-        const messageDiv = document.createElement("div");
-        messageDiv.className =
-          role === "user"
-            ? "bg-red-500 rounded-lg p-3 text-sm ml-auto max-w-[80%]"
-            : "bg-gray-700 rounded-lg p-3 text-sm max-w-[80%]";
-
-        let html = `<p class="text-gray-100">${content}</p>`;
-
-        if (sources && sources.length > 0) {
-          html +=
-            '<div class="mt-2 pt-2 border-t border-gray-600 text-xs text-gray-400">';
-          html += '<p class="font-semibold mb-1">Sources:</p>';
-          sources.forEach((source) => {
-            html += `<p>• ${source.movie_title} - ${source.section_type}</p>`;
-          });
-          html += "</div>";
-        }
-
-        messageDiv.innerHTML = html;
-        chatMessages.appendChild(messageDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }
-    </script>
-  </body>
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
 </html>
