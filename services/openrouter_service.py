@@ -32,30 +32,132 @@ class OpenRouterService:
     
     def _create_section_prompt(self, movie_data, section_type):
         section_instructions = {
-            'basic_info': """Write EXACTLY 500 words analyzing the production, budget, box office, awards, and cultural impact. 
-            Focus on: production history, financial performance, critical reception, awards won, behind-the-scenes stories, and initial cultural reception.""",
+            'basic_info': """Write EXACTLY 500 words analyzing the production, budget, box office, awards, and reception. 
+            Focus on: production history, financial performance, critical acclaim, awards won, behind-the-scenes stories, and initial reception.
+            Be informative and insightful, but write clearly so anyone interested in film can understand.""",
             
-            'cast_performances': """Write EXACTLY 500 words analyzing actor performances.
-            Focus on: each main actor's technique, casting decisions, on-screen chemistry, preparation methods, memorable scenes, critical reception of performances, and career context.""",
+            'cast_performances': """Write EXACTLY 500 words analyzing the actors and their performances.
+            Focus on: what each actor brings to their role, casting decisions, chemistry between actors, memorable performances, and critical praise.
+            Be analytical but accessible - explain acting techniques in clear terms.""",
             
-            'character_analysis': """Write EXACTLY 500 words analyzing character psychology and development.
-            Focus on: character motivations, internal conflicts, character arcs, relationships, symbolic functions, how characters embody themes, and psychological depth.""",
+            'character_analysis': """Write EXACTLY 500 words analyzing the characters and their development.
+            Focus on: character motivations, development arcs, relationships, and what they represent in the story.
+            Be thoughtful but clear - make character psychology accessible to general audiences.""",
             
             'thematic_artistic': """Write EXACTLY 500 words analyzing themes and artistic elements.
-            Focus on: central themes, directorial vision, cinematography techniques, production design, musical score, editing style, and visual symbolism.""",
+            Focus on: central themes, directorial vision, cinematography, production design, musical score, and visual symbolism.
+            Be sophisticated but accessible - explain artistic choices in understandable terms.""",
             
             'critical_reception': """Write EXACTLY 500 words analyzing reviews and critical reception.
-            Focus on: major critics' opinions (with specific examples), professional reviews, audience reception, festival response, awards recognition, and evolution of critical opinion.""",
+            Focus on: what critics said (with specific examples), audience reactions, awards recognition, and how opinions evolved.
+            Be thorough but readable - present critical perspectives clearly.""",
             
-            'legacy_impact': """Write EXACTLY 500 words analyzing long-term influence and legacy.
-            Focus on: cultural impact, influence on later films, place in cinema history, ongoing relevance, and lasting significance in film culture."""
+            'legacy_impact': """Write EXACTLY 500 words analyzing the film's lasting impact.
+            Focus on: influence on other films, cultural significance, ongoing relevance, and place in cinema history.
+            Be insightful but accessible - explain the film's importance in clear terms."""
         }
         
-        instruction = section_instructions.get(section_type, "Write EXACTLY 500 words of detailed analysis.")
+        instruction = section_instructions.get(section_type, "Write EXACTLY 500 words of thoughtful, accessible analysis.")
         
         genres_str = movie_data.get('genres', '') if isinstance(movie_data.get('genres'), str) else ', '.join([g.name for g in movie_data.get('genres', [])])
         
-        prompt = f"""You are an expert film critic. Write EXACTLY 500 words of analysis. Do NOT include any titles, headings, or labels. Start directly with the analysis text.
+        prompt = f"""You are a knowledgeable film writer creating accessible, engaging analysis for movie enthusiasts.
+
+Movie: "{movie_data.get('title', '')}" ({movie_data.get('year', '')})
+Director: {movie_data.get('director', '')}
+Genres: {genres_str}
+Plot: {movie_data.get('plot_summary', '')}
+
+{instruction}
+
+CRITICAL STYLE GUIDELINES:
+- Write EXACTLY 500 words (not 400, not 600 - exactly 500)
+- NO titles, NO headings, NO section labels, NO hashtags
+- Start directly with the analysis
+- Write in flowing, clear paragraphs
+- Be intelligent and insightful, but accessible
+- Use precise language, but explain complex concepts clearly
+- Avoid overly academic jargon - choose clear words over complicated ones
+- Include specific examples and details
+- Write for educated general audiences, not film scholars
+- Balance depth with readability
+
+Think: "Smart magazine article" not "academic paper" or "casual blog post"
+
+Begin writing the 500-word analysis NOW:"""
+        
+        return prompt
+    
+import openai
+from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)
+
+class OpenRouterService:
+    def __init__(self):
+        self.client = openai.OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=settings.OPENROUTER_API_KEY
+        )
+        self.model = "google/gemma-3-4b-it:free"  
+    
+    def generate_movie_section(self, movie_data, section_type):
+        try:
+            prompt = self._create_section_prompt(movie_data, section_type)
+            
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=1000,
+                temperature=0.7
+            )
+            
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            logger.error(f"Error generating section {section_type} for {movie_data.get('title', 'Unknown')}: {e}")
+            return None
+    
+    def _create_section_prompt(self, movie_data, section_type):
+        section_instructions = {
+            'basic_info': """Write EXACTLY 500 words analyzing the production, budget, box office, awards, and reception. 
+            Use SIMPLE, CONVERSATIONAL language that anyone can understand.
+            Focus on: production story, financial success, awards won, behind-the-scenes facts, and how people reacted when it came out.
+            Write like you're explaining to a friend, not writing an academic paper.""",
+            
+            'cast_performances': """Write EXACTLY 500 words analyzing the actors and their performances.
+            Use SIMPLE, CONVERSATIONAL language that anyone can understand.
+            Focus on: what each actor brought to their role, casting choices, chemistry between actors, memorable scenes, and how critics praised performances.
+            Write like you're discussing the movie with friends, not writing a film school essay.""",
+            
+            'character_analysis': """Write EXACTLY 500 words analyzing the characters and their development.
+            Use SIMPLE, CONVERSATIONAL language that anyone can understand.
+            Focus on: what drives the characters, how they change, their relationships, and what they represent in the story.
+            Write like you're explaining characters to someone who hasn't seen the movie yet.""",
+            
+            'thematic_artistic': """Write EXACTLY 500 words analyzing themes and artistic elements.
+            Use SIMPLE, CONVERSATIONAL language that anyone can understand.
+            Focus on: main ideas in the film, director's vision, visual style, music, and symbolism - but explain it clearly.
+            Write like a film enthusiast sharing insights, not a film critic showing off vocabulary.""",
+            
+            'critical_reception': """Write EXACTLY 500 words analyzing reviews and reception.
+            Use SIMPLE, CONVERSATIONAL language that anyone can understand.
+            Focus on: what critics said (give examples), how audiences reacted, awards and recognition, and how opinions changed over time.
+            Write like you're summarizing what people thought about the movie, not writing a literature review.""",
+            
+            'legacy_impact': """Write EXACTLY 500 words analyzing the film's lasting impact.
+            Use SIMPLE, CONVERSATIONAL language that anyone can understand.
+            Focus on: how it influenced other movies, cultural impact, why it's still relevant, and its place in cinema history.
+            Write like you're explaining why this movie matters, not lecturing about film theory."""
+        }
+        
+        instruction = section_instructions.get(section_type, "Write EXACTLY 500 words of analysis in simple, conversational language.")
+        
+        genres_str = movie_data.get('genres', '') if isinstance(movie_data.get('genres'), str) else ', '.join([g.name for g in movie_data.get('genres', [])])
+        
+        prompt = f"""You are a movie enthusiast writing for everyday people who love movies.
 
 Movie: "{movie_data.get('title', '')}" ({movie_data.get('year', '')})
 Director: {movie_data.get('director', '')}
@@ -66,12 +168,14 @@ Plot: {movie_data.get('plot_summary', '')}
 
 CRITICAL RULES:
 - Write EXACTLY 500 words (not 400, not 600 - exactly 500)
+- Use SIMPLE, EVERYDAY language - avoid complex vocabulary
 - NO titles, NO headings, NO section labels, NO hashtags
-- Start immediately with the analysis
-- Write in flowing prose paragraphs
-- Use professional film criticism language
-- Include specific examples and details
-- Demonstrate deep cinematic knowledge
+- Start directly with the content
+- Write in flowing paragraphs that anyone can understand
+- Explain concepts clearly without assuming knowledge
+- Use specific examples and details
+- Be enthusiastic but accessible
+- Write like you're talking to a friend about the movie
 
 Begin writing the 500-word analysis NOW:"""
         
