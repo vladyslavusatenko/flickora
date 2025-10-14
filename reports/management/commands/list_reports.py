@@ -105,7 +105,7 @@ class Command(BaseCommand):
     def _get_status(self, total, with_embeddings):
         if total == 0:
             return "No Reports"
-        elif total < 6:
+        elif total < 8: 
             return "Incomplete"
         elif with_embeddings < total:
             return "Missing Embeddings"

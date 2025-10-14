@@ -30,12 +30,14 @@ class Command(BaseCommand):
             return
         
         section_types = [
-            'basic_info',
-            'cast_performances', 
-            'character_analysis',
-            'thematic_artistic',
-            'critical_reception',
-            'legacy_impact'
+            'production',
+            'plot_structure',
+            'cast_crew',
+            'characters',
+            'visual_technical',
+            'themes',
+            'reception',
+            'legacy'
         ]
         
         total_generated = 0
@@ -89,7 +91,3 @@ class Command(BaseCommand):
                     self.stdout.write(self.style.ERROR(f"    ✗ Error: {e}"))
         
         self.stdout.write(self.style.SUCCESS(f"\nTotal sections generated: {total_generated}"))
-        
-        total_sections = MovieSection.objects.count()
-        sections_with_embeddings = MovieSection.objects.filter(embedding__isnull=False).count()
-        self.stdout.write(f"\nEmbedding stats: {sections_with_embeddings}/{total_sections} sections have embeddings")

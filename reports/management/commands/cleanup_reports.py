@@ -21,12 +21,14 @@ class Command(BaseCommand):
             '--section-type',
             type=str,
             choices=[
-                'basic_info',
-                'cast_performances',
-                'character_analysis',
-                'thematic_artistic',
-                'critical_reception',
-                'legacy_impact'
+                'production',
+                'plot_structure',
+                'cast_crew',
+                'characters',
+                'visual_technical',
+                'themes',
+                'reception',
+                'legacy'
             ],
             help='Delete only specific section type'
         )
@@ -79,7 +81,7 @@ class Command(BaseCommand):
             from django.db.models import Count
             incomplete_movies = Movie.objects.annotate(
                 section_count=Count('sections')
-            ).filter(section_count__lt=6)
+            ).filter(section_count__lt=8)
             queryset = queryset.filter(movie__in=incomplete_movies)
             self.stdout.write(f"Found {incomplete_movies.count()} movies with incomplete reports")
         

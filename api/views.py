@@ -15,11 +15,6 @@ logger = logging.getLogger(__name__)
 @csrf_exempt
 @require_http_methods(["POST"])
 def import_movie(request):
-    """
-    Import movie from TMDB
-    POST /api/import-movie/
-    Body: {"tmdb_id": 278}
-    """
     try:
         data = json.loads(request.body)
         tmdb_id = data.get('tmdb_id')
@@ -73,11 +68,6 @@ def import_movie(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def generate_section(request):
-    """
-    Generate single section for movie
-    POST /api/generate-section/
-    Body: {"movie_id": 1, "section_type": "basic_info"}
-    """
     try:
         data = json.loads(request.body)
         movie_id = data.get('movie_id')
@@ -85,6 +75,12 @@ def generate_section(request):
         
         if not movie_id or not section_type:
             return JsonResponse({'error': 'movie_id and section_type required'}, status=400)
+        
+        valid_types = [choice[0] for choice in MovieSection.SECTION_TYPES]
+        if section_type not in valid_types:
+            return JsonResponse({
+                'error': f'Invalid section_type. Valid types: {", ".join(valid_types)}'
+            }, status=400)
         
         movie = Movie.objects.get(id=movie_id)
         
@@ -104,12 +100,12 @@ def generate_section(request):
         
         if not content:
             return JsonResponse({'error': 'Failed to generate content'}, status=500)
-        
+
         section = MovieSection.objects.create(
             movie=movie,
             section_type=section_type,
             content=content,
-            embedding=None
+            embedding=None 
         )
         
         return JsonResponse({
@@ -118,6 +114,7 @@ def generate_section(request):
                 'id': section.id,
                 'section_type': section.section_type,
                 'word_count': section.word_count,
+                'has_embedding': False,  # Zawsze False - generuj osobno przez /api/generate-embedding/
                 'movie_id': movie.id
             }
         })
@@ -132,11 +129,6 @@ def generate_section(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def generate_embedding(request):
-    """
-    Generate embedding for section using management command
-    POST /api/generate-embedding/
-    Body: {"section_id": 1}
-    """
     try:
         data = json.loads(request.body)
         section_id = data.get('section_id')
@@ -149,38 +141,43 @@ def generate_embedding(request):
         if section.embedding is not None and len(section.embedding) > 0:
             return JsonResponse({'error': 'Embedding already exists'}, status=400)
         
-        # Use management command instead of RAGService
-        from django.core.management import call_command
-        import io
+        rag = RAGService()
         
-        out = io.StringIO()
-        call_command('generate_embeddings', section_id=section_id, stdout=out)
-        
-        # Refresh from DB
-        section.refresh_from_db()
-        
-        if section.embedding is not None and len(section.embedding) > 0:
+        try:
+            logger.info(f"Generating embedding for section {section_id}")
+            embedding = rag.generate_embedding(section.content)
+            
+            section.embedding = embedding
+            section.save(update_fields=['embedding'])
+            
+            logger.info(f"Successfully generated embedding for section {section_id}")
+            
             return JsonResponse({
                 'success': True,
                 'section_id': section.id,
-                'embedding_dimensions': len(section.embedding)
+                'embedding_dimensions': len(embedding) if embedding is not None else 0
             })
-        else:
-            return JsonResponse({'error': 'Embedding generation failed'}, status=500)
+            
+        except Exception as e:
+            logger.error(f"Error generating embedding for section {section_id}: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            
+            return JsonResponse({
+                'error': f'Embedding generation failed: {str(e)}'
+            }, status=500)
         
     except MovieSection.DoesNotExist:
         return JsonResponse({'error': 'Section not found'}, status=404)
     except Exception as e:
-        logger.error(f"Error generating embedding: {e}")
+        logger.error(f"Error in generate_embedding endpoint: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return JsonResponse({'error': str(e)}, status=500)
 
 
 @require_http_methods(["GET"])
 def movie_status(request, movie_id):
-    """
-    Check movie report status
-    GET /api/movie-status/<movie_id>/
-    """
     try:
         movie = Movie.objects.get(id=movie_id)
         sections = MovieSection.objects.filter(movie=movie)
@@ -193,8 +190,8 @@ def movie_status(request, movie_id):
                 'has_embedding': section.embedding is not None and len(section.embedding) > 0
             }
         
-        all_types = ['basic_info', 'cast_performances', 'character_analysis', 
-                     'thematic_artistic', 'critical_reception', 'legacy_impact']
+        all_types = ['production', 'plot_structure', 'cast_crew', 'characters',
+                     'visual_technical', 'themes', 'reception', 'legacy']
         
         for section_type in all_types:
             if section_type not in section_status:
@@ -209,7 +206,7 @@ def movie_status(request, movie_id):
             'title': movie.title,
             'sections': section_status,
             'total_sections': sections.count(),
-            'complete': sections.count() == 6
+            'complete': sections.count() == 8
         })
         
     except Movie.DoesNotExist:
@@ -218,13 +215,8 @@ def movie_status(request, movie_id):
 
 @require_http_methods(["GET"])
 def movies_without_reports(request):
-    """
-    Get list of movies without complete reports OR missing embeddings
-    GET /api/movies-without-reports/?limit=10
-    """
     limit = int(request.GET.get('limit', 10))
     
-    # Movies with incomplete sections OR missing embeddings
     movies = Movie.objects.annotate(
         section_count=models.Count('sections'),
         sections_with_embeddings=models.Count(
@@ -232,8 +224,8 @@ def movies_without_reports(request):
             filter=models.Q(sections__embedding__isnull=False)
         )
     ).filter(
-        models.Q(section_count__lt=6) |  # Less than 6 sections
-        models.Q(section_count__gt=models.F('sections_with_embeddings'))  # Missing embeddings
+        models.Q(section_count__lt=8) |
+        models.Q(section_count__gt=models.F('sections_with_embeddings'))
     ).order_by('id')[:limit]
     
     result = []
@@ -255,10 +247,6 @@ def movies_without_reports(request):
 
 @require_http_methods(["GET"])
 def get_movie_sections(request, movie_id):
-    """
-    Get all sections for a movie with their IDs
-    GET /api/movie-sections/<movie_id>/
-    """
     try:
         movie = Movie.objects.get(id=movie_id)
         sections = MovieSection.objects.filter(movie=movie)

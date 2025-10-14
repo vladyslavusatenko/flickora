@@ -97,7 +97,7 @@ class MovieAdmin(admin.ModelAdmin):
         if total == 0:
             color = 'red'
             icon = '❌'
-        elif total < 6:
+        elif total < 8:  
             color = 'orange'
             icon = '⚠️'
         else:
@@ -105,7 +105,7 @@ class MovieAdmin(admin.ModelAdmin):
             icon = '✅'
         
         return format_html(
-            '<span style="color: {};">{} {}/6</span>',
+            '<span style="color: {};">{} {}/8</span>',  
             color, icon, total
         )
     section_status.short_description = 'Reports'
