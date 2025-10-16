@@ -92,3 +92,38 @@ local_settings.py
 *.joblib
 faiss_index/
 embeddings_cache/
+
+# Node dependencies
+node_modules/
+
+# Build output directories
+dist/
+build/
+out/
+
+# Vite cache
+.vite/
+vite-cache/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+bun-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Editor & OS-specific files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.log
