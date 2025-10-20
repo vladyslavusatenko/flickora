@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Film } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import LoadingSpinner from '../components/common/loadingSpinner';
+import '../styles/pages/Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -26,49 +27,47 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-[var(--color-dark-bg)]">
-      <div className="max-w-md w-full">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-[var(--color-primary)] rounded flex items-center justify-center">
-              <Film className="w-8 h-8" />
+    <div className="login-page">
+      <div className="login-container">
+        <div className="login-header">
+          <div className="login-logo">
+            <div className="login-logo-icon">
+              <Film size={32} />
             </div>
-            <h1 className="text-3xl font-bold">flickora</h1>
+            <h1 className="login-logo-text">flickora</h1>
           </div>
-          <h2 className="text-2xl font-semibold mb-2">Welcome back</h2>
-          <p className="text-gray-400">Sign in to continue your movie journey</p>
+          <h2 className="login-title">Welcome back</h2>
+          <p className="login-subtitle">Sign in to continue your movie journey</p>
         </div>
 
-        {/* Login Form */}
-        <div className="bg-[var(--color-dark-card)] rounded-lg p-8">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="login-form-wrapper">
+          <form onSubmit={handleSubmit} className="login-form">
             {error && (
-              <div className="bg-red-500/10 border border-red-500 rounded-lg p-4 text-red-500">
+              <div className="error-message">
                 {error}
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Username</label>
+            <div className="form-group">
+              <label className="form-label">Username</label>
               <input
                 type="text"
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-[var(--color-dark-bg)] border border-gray-700 rounded-lg focus:outline-none focus:border-[var(--color-primary)] text-white"
+                className="form-input"
                 required
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Password</label>
+            <div className="form-group">
+              <label className="form-label">Password</label>
               <input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-[var(--color-dark-bg)] border border-gray-700 rounded-lg focus:outline-none focus:border-[var(--color-primary)] text-white"
+                className="form-input"
                 required
               />
             </div>
@@ -76,7 +75,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="form-submit"
             >
               {isLoading ? (
                 <>
@@ -89,21 +88,19 @@ const Login = () => {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-400">
+          <div className="login-footer">
+            <p className="login-footer-text">
               Don't have an account?{' '}
-              <Link to="/register" className="text-[var(--color-primary)] hover:text-[var(--color-primary-light)] font-medium">
+              <Link to="/register" className="login-link">
                 Sign up
               </Link>
             </p>
           </div>
         </div>
 
-        <div className="mt-6 text-center">
-          <Link to="/" className="text-gray-400 hover:text-white transition">
-            ← Back to Home
-          </Link>
-        </div>
+        <Link to="/" className="back-link">
+          ← Back to Home
+        </Link>
       </div>
     </div>
   );

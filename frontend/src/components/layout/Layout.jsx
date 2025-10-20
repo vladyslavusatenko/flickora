@@ -1,21 +1,15 @@
 import { Outlet } from 'react-router-dom';
-import Sidebar from './sidebar';
+import Sidebar from './Sidebar';
 import Header from './Header';
-import './Layout.css';
+import '../../styles/components/Layout.css';
 
 const Layout = () => {
   return (
-    <div className="flex h-screen bg-[var(--color-dark-bg)]">
-      {/* Sidebar */}
+    <div className="layout">
       <Sidebar />
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
+      <div className="layout-main">
         <Header />
-
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto scrollbar-hide p-8">
+        <main className="layout-content scrollbar-hide">
           <Outlet />
         </main>
       </div>

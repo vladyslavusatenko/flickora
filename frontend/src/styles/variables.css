@@ -1,0 +1,26 @@
+:root {
+  --color-bg: #0A0E27;
+  --color-sidebar: #151932;
+  --color-card: #1E2139;
+  --color-hover: #1E2442;
+  --color-primary: #3B82F6;
+  --color-primary-dark: #2563EB;
+  --color-primary-light: #60A5FA;
+  
+  --color-text: #FFFFFF;
+  --color-text-secondary: #9CA3AF;
+  --color-border: #1F2937;
+  
+  --color-yellow: #FCD34D;
+  --color-red: #EF4444;
+  --color-green: #10B981;
+  
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  
+  --border-radius: 0.5rem;
+  --transition: all 0.2s ease;
+}

@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { moviesAPI } from '../../api';
+import '../../styles/components/Sidebar.css';
 
 const Sidebar = () => {
   const location = useLocation();
@@ -17,21 +18,14 @@ const Sidebar = () => {
 
   const fetchGenres = async () => {
     try {
-      const fetchGenres = async () => {
-        try {
-            const response = await moviesAPI.getGenres();
-            // Check if data is array or paginated object
-            const genresList = Array.isArray(response.data) 
-            ? response.data 
-            : response.data.results || [];
-            setGenres(genresList.slice(0, 10));
-        } catch (error) {
-            console.error('Error fetching genres:', error);
-            setGenres([]); // Set empty array on error
-        }
-        };
+      const response = await moviesAPI.getGenres();
+      const genresList = Array.isArray(response.data) 
+        ? response.data 
+        : response.data.results || [];
+      setGenres(genresList.slice(0, 10));
     } catch (error) {
       console.error('Error fetching genres:', error);
+      setGenres([]);
     }
   };
 
@@ -46,97 +40,72 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="w-64 bg-[var(--color-dark-sidebar)] border-r border-gray-700 flex flex-col">
-      {/* Logo */}
-      <div className="p-4 border-b border-gray-700 flex items-center gap-3">
-        <div className="w-8 h-8 bg-[var(--color-primary)] rounded flex items-center justify-center">
-          <Film className="w-5 h-5" />
+    <aside className="sidebar">
+      <div className="sidebar-header">
+        <div className="sidebar-logo">
+          <Film size={24} />
         </div>
-        <span className="text-xl font-bold">flickora</span>
+        <span className="sidebar-title">flickora</span>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto scrollbar-hide p-4">
-        <div className="space-y-2">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
+      <nav className="sidebar-nav scrollbar-hide">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`nav-link ${isActive(item.path) ? 'active' : ''}`}
+            >
+              <Icon size={20} />
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+
+        <div className="nav-divider"></div>
+
+        <button
+          onClick={() => setShowGenres(!showGenres)}
+          className="nav-link"
+        >
+          <Folder size={20} />
+          <span>Genres</span>
+          <ChevronRight 
+            size={16} 
+            className={`chevron ${showGenres ? 'open' : ''}`}
+          />
+        </button>
+
+        {showGenres && (
+          <div className="nav-submenu">
+            {genres.map((genre) => (
               <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                  isActive(item.path)
-                    ? 'bg-[var(--color-primary)] text-white'
-                    : 'text-gray-400 hover:bg-[var(--color-dark-hover)] hover:text-white'
-                }`}
+                key={genre.id}
+                to={`/movies?genre=${genre.tmdb_id}`}
+                className="nav-submenu-link"
               >
-                <Icon className="w-5 h-5" />
-                <span>{item.label}</span>
+                {genre.name}
               </Link>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
 
-        {/* Divider */}
-        <div className="h-px bg-gray-700 my-4"></div>
+        <div className="nav-divider"></div>
 
-        {/* Genres Section */}
-        <div className="mb-2">
-          <button
-            onClick={() => setShowGenres(!showGenres)}
-            className="flex items-center justify-between w-full px-4 py-3 rounded-lg hover:bg-[var(--color-dark-hover)] transition text-gray-400 hover:text-white"
-          >
-            <div className="flex items-center gap-3">
-              <Folder className="w-5 h-5" />
-              <span>Genres</span>
-            </div>
-            <ChevronRight
-              className={`w-4 h-4 transition-transform ${
-                showGenres ? 'rotate-90' : ''
-              }`}
-            />
-          </button>
-
-          {showGenres && (
-            <div className="pl-8 mt-2 space-y-1">
-              {genres.map((genre) => (
-                <Link
-                  key={genre.id}
-                  to={`/movies?genre=${genre.tmdb_id}`}
-                  className="block px-4 py-2 rounded-lg hover:bg-[var(--color-dark-hover)] transition text-sm text-gray-400 hover:text-white"
-                >
-                  {genre.name}
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Divider */}
-        <div className="h-px bg-gray-700 my-4"></div>
-
-        {/* Global Chat */}
         <Link
           to="/chat"
-          className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-            isActive('/chat')
-              ? 'bg-[var(--color-primary)] text-white'
-              : 'text-gray-400 hover:bg-[var(--color-dark-hover)] hover:text-white'
-          }`}
+          className={`nav-link ${isActive('/chat') ? 'active' : ''}`}
         >
-          <MessageCircle className="w-5 h-5" />
+          <MessageCircle size={20} />
           <span>Global Chat</span>
         </Link>
 
         <Link
           to="/settings"
-          className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-            isActive('/settings')
-              ? 'bg-[var(--color-primary)] text-white'
-              : 'text-gray-400 hover:bg-[var(--color-dark-hover)] hover:text-white'
-          }`}
+          className={`nav-link ${isActive('/settings') ? 'active' : ''}`}
         >
-          <Settings className="w-5 h-5" />
+          <Settings size={20} />
           <span>Settings</span>
         </Link>
       </nav>

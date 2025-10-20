@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, Moon, Bell, LogOut, User } from 'lucide-react';
+import { Search, Moon, Bell, LogOut, User } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import '../../styles/components/Header.css';
 
 const Header = () => {
   const navigate = useNavigate();
@@ -24,68 +25,60 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-[var(--color-dark-sidebar)] border-b border-gray-700 p-4 flex items-center justify-between">
-      {/* Search Bar */}
-      <div className="flex-1 max-w-2xl">
-        <form onSubmit={handleSearch} className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+    <header className="header">
+      <div className="search-bar">
+        <form onSubmit={handleSearch}>
+          <Search className="search-icon" size={20} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search movies, shows, or discussions..."
-            className="w-full pl-10 pr-4 py-2 bg-[var(--color-dark-bg)] border border-gray-700 rounded-lg focus:outline-none focus:border-[var(--color-primary)] text-white"
+            className="search-input"
           />
         </form>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-4 ml-4">
+      <div className="header-actions">
         {isAuthenticated ? (
           <>
-            <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition flex items-center gap-2">
-              <Plus className="w-5 h-5" />
-              <span className="hidden md:inline">Add to Desktop</span>
+            <button className="header-btn">
+              <Moon size={20} />
             </button>
 
-            <button className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition">
-              <Moon className="w-5 h-5" />
+            <button className="header-btn">
+              <Bell size={20} />
             </button>
 
-            <button className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition">
-              <Bell className="w-5 h-5" />
-            </button>
-
-            {/* User Menu */}
-            <div className="relative">
+            <div className="user-menu">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="w-10 h-10 bg-[var(--color-primary)] rounded-full flex items-center justify-center font-semibold cursor-pointer hover:bg-[var(--color-primary-dark)] transition"
+                className="user-avatar"
               >
                 {user?.username?.charAt(0).toUpperCase()}
               </button>
 
               {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-[var(--color-dark-card)] border border-gray-700 rounded-lg shadow-xl py-2 z-50">
-                  <div className="px-4 py-2 border-b border-gray-700">
-                    <p className="font-semibold">{user?.username}</p>
-                    <p className="text-sm text-gray-400">{user?.email}</p>
+                <div className="user-dropdown">
+                  <div className="user-dropdown-header">
+                    <p className="user-dropdown-name">{user?.username}</p>
+                    <p className="user-dropdown-email">{user?.email}</p>
                   </div>
                   <button
                     onClick={() => {
                       navigate('/profile');
                       setShowUserMenu(false);
                     }}
-                    className="w-full px-4 py-2 hover:bg-[var(--color-dark-hover)] transition text-left flex items-center gap-2"
+                    className="user-dropdown-item"
                   >
-                    <User className="w-4 h-4" />
+                    <User size={16} />
                     Profile
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="w-full px-4 py-2 hover:bg-[var(--color-dark-hover)] transition text-left flex items-center gap-2 text-red-400"
+                    className="user-dropdown-item logout"
                   >
-                    <LogOut className="w-4 h-4" />
+                    <LogOut size={16} />
                     Logout
                   </button>
                 </div>
@@ -96,13 +89,13 @@ const Header = () => {
           <>
             <button
               onClick={() => navigate('/login')}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition"
+              className="header-btn"
             >
               Login
             </button>
             <button
               onClick={() => navigate('/register')}
-              className="px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] rounded-lg transition font-semibold"
+              className="btn btn-primary"
             >
               Sign Up
             </button>

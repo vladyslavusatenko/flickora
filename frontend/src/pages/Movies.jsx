@@ -1,5 +1,13 @@
+import '../styles/pages/Home.css';
+
 const Movies = () => {
-  return <div className="text-white">Movies Page - Coming Soon</div>;
+  return (
+    <div className="home">
+      <div className="section">
+        <h1>Movies Page - Coming Soon</h1>
+      </div>
+    </div>
+  );
 };
 
 export default Movies;

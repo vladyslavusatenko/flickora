@@ -1,0 +1,272 @@
+.home {
+  background: var(--color-bg);
+}
+
+.hero {
+  position: relative;
+  height: 70vh;
+  background-size: cover;
+  background-position: center;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+}
+
+.hero-content {
+  width: 100%;
+  padding: 0 2rem 4rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.hero-inner {
+  max-width: 42rem;
+}
+
+.hero-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.hero-badge-icon {
+  color: var(--color-primary);
+}
+
+.hero-badge-text {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.hero-title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  line-height: 1.1;
+}
+
+.hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--color-text-secondary);
+}
+
+.hero-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hero-rating-icon {
+  color: var(--color-yellow);
+  fill: var(--color-yellow);
+}
+
+.hero-rating-value {
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.hero-description {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  color: var(--color-text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.section {
+  padding: 3rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.section-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-icon {
+  color: var(--color-primary);
+}
+
+.section-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+.section-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-primary);
+  transition: var(--transition);
+}
+
+.section-link:hover {
+  color: var(--color-primary-dark);
+}
+
+.movies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 4rem;
+}
+
+.movie-card {
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.movie-poster {
+  position: relative;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+  aspect-ratio: 2/3;
+}
+
+.movie-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.movie-card:hover .movie-poster img {
+  transform: scale(1.1);
+}
+
+.movie-rating {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.movie-rating-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  color: var(--color-yellow);
+  fill: var(--color-yellow);
+}
+
+.movie-rating-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.movie-title {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.movie-card:hover .movie-title {
+  color: var(--color-primary);
+}
+
+.movie-year {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.genres-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.genre-card {
+  background: var(--color-card);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  text-align: center;
+  transition: var(--transition);
+}
+
+.genre-card:hover {
+  background: var(--color-hover);
+}
+
+.genre-name {
+  font-weight: 600;
+  font-size: 1.125rem;
+  transition: var(--transition);
+}
+
+.genre-card:hover .genre-name {
+  color: var(--color-primary);
+}
+
+.genre-count {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 1024px) {
+  .hero-title {
+    font-size: 2.5rem;
+  }
+
+  .movies-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    height: 50vh;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+  }
+
+  .movies-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1rem;
+  }
+
+  .genres-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+}
