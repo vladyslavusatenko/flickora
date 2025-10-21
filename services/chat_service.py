@@ -12,27 +12,22 @@ class ChatService:
             base_url="https://openrouter.ai/api/v1",
             api_key=settings.OPENROUTER_API_KEY
         )
-        self.model = "meta-llama/llama-4-maverick:free"
+        self.model = "deepseek/deepseek-chat-v3.1:free"
         self.rag = RAGService()
     
     def chat(self, user_message, movie_id=None):
         """
-        Enhanced chat with better context retrieval (8 sections)
+        Enhanced chat with better context retrieval
         """
-        # Use enhanced RAG with prioritization
         if movie_id:
-            # Movie-specific: fewer but more relevant sections
             results = self.rag.search_with_scores(user_message, k=3, movie_id=movie_id)
         else:
-            # Global search: more sections from different movies
             results = self.rag.search_with_scores(user_message, k=5, movie_id=None)
         
         sections = [r['section'] for r in results]
         
-        # Build context with MORE content per section
         context_parts = []
         for s in sections:
-            # Use more content based on section importance
             content_length = self._get_context_length(s.section_type, movie_id)
             
             context_parts.append(
@@ -42,7 +37,6 @@ class ChatService:
         
         context = "\n\n---\n\n".join(context_parts)
         
-        # Build system prompt
         if movie_id:
             from movies.models import Movie
             movie = Movie.objects.get(id=movie_id)
@@ -51,30 +45,29 @@ class ChatService:
 Context from the movie analysis:
 {context}
 
-IMPORTANT RULES:
-- Answer DIRECTLY and COMPLETELY but stay CONCISE
-- Use 3-5 sentences (100-150 words maximum)
-- Focus ONLY on what the user asked
-- Be conversational and engaging
-- If context doesn't have the answer, say so briefly
-- Don't repeat information unnecessarily
+CRITICAL RULES:
+1. Answer ONLY based on the context provided above
+2. If the question is not related to this movie or cannot be answered from the context, politely say: "I can only answer questions about {movie.title} based on the movie analysis. Please ask something about the film."
+3. NEVER use your general knowledge - only use the context
+4. Be conversational and concise (3-5 sentences)
+5. If context doesn't fully answer the question, say what you know and that you don't have more information
 
-Answer the user's question based on this context."""
+Answer the user's question based STRICTLY on this context."""
         else:
             system_prompt = f"""You are a knowledgeable movie expert assistant.
 
 Context from movie analyses:
 {context}
 
-IMPORTANT RULES:
-- Answer DIRECTLY and COMPLETELY but stay CONCISE
-- Use 3-5 sentences (100-150 words maximum)  
-- Focus ONLY on what the user asked
-- Mention movie titles when relevant
-- Be conversational and engaging
-- If context doesn't have the answer, say so briefly
+CRITICAL RULES:
+1. Answer ONLY based on the context provided above
+2. If the question is not about movies or cannot be answered from the context, politely say: "I can only answer questions about movies based on our movie database. Please ask something about films."
+3. NEVER use your general knowledge - only use the context
+4. Be conversational and concise (3-5 sentences)
+5. Mention movie titles when relevant
+6. If context doesn't fully answer the question, say what you know and that you don't have more information
 
-Answer based on this context."""
+Answer based STRICTLY on this context."""
         
         try:
             response = self.client.chat.completions.create(
@@ -90,7 +83,6 @@ Answer based on this context."""
             
             answer = response.choices[0].message.content.strip()
             
-            # Quality control: trim if too long
             sentences = answer.split('. ')
             if len(sentences) > 6:
                 answer = '. '.join(sentences[:6]) + '.'
@@ -109,26 +101,43 @@ Answer based on this context."""
     
     def _get_context_length(self, section_type, movie_id):
         """
-        Determine how much content to include based on section type and chat mode (8 sections)
+        Determine how much content to include based on section type and chat mode
         """
-        # Priority sections get more context
         high_priority = ['plot_structure', 'characters', 'themes']
         medium_priority = ['visual_technical', 'production', 'cast_crew']
         low_priority = ['reception', 'legacy']
         
         if movie_id:
-            # Movie-specific: can use more context per section
             if section_type in high_priority:
-                return 1200  # ~200 words
+                return 1200
             elif section_type in medium_priority:
-                return 900   # ~150 words
+                return 900
             else:
-                return 600   # ~100 words
+                return 600
         else:
-            # Global search: use less per section since we have more movies
             if section_type in high_priority:
-                return 800   # ~130 words
+                return 800
             elif section_type in medium_priority:
-                return 600   # ~100 words
+                return 600
             else:
-                return 400   # ~70 words
+                return 400
+    
+    def process_message(self, message, movie_id=None, conversation_id=None):
+        """
+        Process message and return result (for API compatibility)
+        """
+        result = self.chat(message, movie_id)
+        
+        sources = []
+        for r in result['sources']:
+            sources.append({
+                'section_id': r['section'].id,
+                'similarity': r['similarity'],
+                'movie_title': r['section'].movie.title,
+                'section_type': r['section'].get_section_type_display()
+            })
+        
+        return {
+            'message': result['message'],
+            'sources': sources
+        }

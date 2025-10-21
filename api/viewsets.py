@@ -18,6 +18,7 @@ from chat.serializers import (
     ChatResponseSerializer
 )
 from services.chat_service import ChatService
+from services.tmdb_service import TMDBService
 
 
 class GenreViewSet(viewsets.ReadOnlyModelViewSet):
@@ -51,6 +52,45 @@ class MovieViewSet(viewsets.ReadOnlyModelViewSet):
         sections = movie.sections.all().order_by('section_type')
         serializer = MovieSectionSerializer(sections, many=True)
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'])
+    def cast(self, request, pk=None):
+        """Get cast for a movie from TMDB"""
+        movie = self.get_object()
+        tmdb = TMDBService()
+        movie_data = tmdb.get_movie_details(movie.tmdb_id)
+        
+        if not movie_data or 'credits' not in movie_data:
+            return Response({'cast': []})
+        
+        cast_list = []
+        for person in movie_data['credits'].get('cast', [])[:10]:
+            cast_list.append({
+                'name': person.get('name'),
+                'character': person.get('character'),
+                'profile_path': f"https://image.tmdb.org/t/p/w185{person['profile_path']}" if person.get('profile_path') else None
+            })
+        
+        return Response({'cast': cast_list})
+    
+    @action(detail=True, methods=['get'])
+    def similar(self, request, pk=None):
+        """Get similar movies from TMDB that exist in our database"""
+        movie = self.get_object()
+        tmdb = TMDBService()
+        similar_data = tmdb.get_similar_movies(movie.tmdb_id)
+        
+        if not similar_data:
+            return Response({'similar': []})
+        
+        tmdb_ids = [m['id'] for m in similar_data.get('results', [])[:20]]
+        
+        similar_movies = Movie.objects.filter(
+            tmdb_id__in=tmdb_ids
+        ).prefetch_related('genres')[:4]
+        
+        serializer = MovieListSerializer(similar_movies, many=True)
+        return Response({'similar': serializer.data})
     
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def view(self, request, pk=None):
@@ -90,9 +130,9 @@ class MovieSectionViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ['movie', 'section_type']
     
     def get_serializer_class(self):
-        if self.action == 'list':
-            return MovieSectionListSerializer
-        return MovieSectionSerializer
+        if self.action == 'retrieve':
+            return MovieSectionSerializer
+        return MovieSectionListSerializer
 
 
 class ChatViewSet(viewsets.ViewSet):
@@ -100,42 +140,46 @@ class ChatViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
     
     @action(detail=False, methods=['post'])
-    def message(self, request):
-        """Send a message and get AI response"""
+    def send_message(self, request):
         serializer = ChatRequestSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         message = serializer.validated_data['message']
         movie_id = serializer.validated_data.get('movie_id')
         conversation_id = serializer.validated_data.get('conversation_id')
         
-        # Get or create conversation
         if conversation_id:
             try:
                 conversation = ChatConversation.objects.get(id=conversation_id)
             except ChatConversation.DoesNotExist:
-                conversation = None
+                return Response(
+                    {'error': 'Conversation not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
         else:
-            conversation = None
-        
-        if not conversation:
+            conversation_type = 'movie' if movie_id else 'general'
             conversation = ChatConversation.objects.create(
-                conversation_type='movie' if movie_id else 'global',
-                movie_id=movie_id
+                conversation_type=conversation_type,
+                movie_id=movie_id if movie_id else None
             )
         
-        # Save user message
         ChatMessage.objects.create(
             conversation=conversation,
             role='user',
             content=message
         )
         
-        # Get AI response
         chat_service = ChatService()
-        result = chat_service.chat(message, movie_id)
+        result = chat_service.process_message(
+            message=message,
+            movie_id=movie_id,
+            conversation_id=conversation.id
+        )
         
-        # Save assistant message
         ChatMessage.objects.create(
             conversation=conversation,
             role='assistant',
@@ -151,7 +195,6 @@ class ChatViewSet(viewsets.ViewSet):
             ]
         )
         
-        # Prepare response
         response_data = {
             'message': result['message'],
             'conversation_id': conversation.id,

@@ -25,6 +25,21 @@ class TMDBService:
             logger.error(f"Error fetching movie {tmdb_id}: {e}")
             return None
     
+    def get_similar_movies(self, tmdb_id):
+        """Get similar movies from TMDB"""
+        try:
+            url = f"{self.base_url}/movie/{tmdb_id}/similar"
+            params = {
+                'api_key': self.api_key,
+                'page': 1
+            }
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            logger.error(f"Error fetching similar movies for {tmdb_id}: {e}")
+            return None
+    
     def search_movies(self, query, page=1):
         """Search for movies by title"""
         try:
@@ -55,6 +70,7 @@ class TMDBService:
         except requests.RequestException as e:
             logger.error(f"Error fetching popular movies: {e}")
             return None
+    
     def get_top_rated_movies(self, page=1):
         """Get top rated movies"""
         try:
