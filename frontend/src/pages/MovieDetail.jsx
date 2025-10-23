@@ -1,17 +1,29 @@
 import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { moviesAPI } from '../api';
+import { chatAPI } from '../api/chat';
 import { Star, Clock, Calendar, ArrowLeft, ChevronDown, Film, Heart, Share2, Send } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useEffect  } from 'react';
 import LoadingSpinner from '../components/common/loadingSpinner';
 import '../styles/pages/MovieDetail.css';
+import ReactMarkdown from 'react-markdown';
 
 const MovieDetail = () => {
   const { id } = useParams();
   const [expandedSections, setExpandedSections] = useState({});
   const [showFullSynopsis, setShowFullSynopsis] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingMessage, setTypingMessage] = useState('');
+  const messagesContainerRef  = useRef(null);
 
+
+  const scrollToBottom = () => {
+  if (messagesContainerRef.current) {
+    messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+  }
+};
   const { data: movieData, isLoading: movieLoading } = useQuery({
     queryKey: ['movie', id],
     queryFn: () => moviesAPI.getMovie(id)
@@ -22,6 +34,15 @@ const MovieDetail = () => {
     queryFn: () => moviesAPI.getMovieSections(id),
     enabled: !!id
   });
+  const typeMessage = (message, index = 0) => {
+  if (index < message.length) {
+      setTypingMessage(prev => prev + message.charAt(index));
+      setTimeout(() => typeMessage(message, index + 1), 20);
+    } else {
+      setIsTyping(false);
+      setTypingMessage('');
+    }
+  };  
 
   const { data: castData } = useQuery({
     queryKey: ['movie-cast', id],
@@ -33,6 +54,31 @@ const MovieDetail = () => {
     queryKey: ['movie-similar', id],
     queryFn: () => moviesAPI.getSimilarMovies(id),
     enabled: !!id
+  });
+
+  const sendMessageMutation = useMutation({
+    mutationFn: (message) => chatAPI.sendMessage(message, id),
+    onSuccess: (response) => {
+      setIsTyping(true);
+      setTypingMessage('');
+      const aiMessagecontent = response.data.message;
+      const aiMessage = {
+        role: 'assistant',
+        content: response.data.message,
+        sources: response.data.sources
+      };
+      typeMessage(aiMessagecontent);
+      setMessages(prev => [...prev, aiMessage]);
+    },
+    onError: (error) => {
+      console.error('Chat error:', error);
+      const errorMessage = {
+        role: 'assistant',
+        content: 'Sorry, I encountered an error. Please try again.',
+        isError: true
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    }
   });
 
   const movie = movieData?.data;
@@ -49,10 +95,19 @@ const MovieDetail = () => {
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (chatMessage.trim()) {
-      console.log('Sending message:', chatMessage);
+    if (chatMessage.trim() && !sendMessageMutation.isPending) {
+      const userMessage = {
+        role: 'user',
+        content: chatMessage.trim()
+      };
+      setMessages(prev => [...prev, userMessage]);
+      sendMessageMutation.mutate(chatMessage.trim());
       setChatMessage('');
     }
+  };
+
+  const handleQuickQuestion = (question) => {
+    setChatMessage(question);
   };
 
   const quickQuestions = [
@@ -60,6 +115,11 @@ const MovieDetail = () => {
     "Explain the dream levels in this movie",
     "What are some hidden details I might have missed?"
   ];
+
+  useEffect(() => {
+    scrollToBottom();
+  } , [messages, sendMessageMutation.isPending]);
+
 
   if (movieLoading) {
     return <LoadingSpinner size="lg" />;
@@ -253,12 +313,55 @@ const MovieDetail = () => {
 
         <div className="movie-detail-sidebar">
           <div className="chat-widget">
-            <h3 className="chat-title">Chat with AI</h3>
-            
-            <div className="chat-messages">
-              <div className="chat-message ai-message">
-                <p>Hi! I'm here to help you explore this movie. Ask me anything about {movie.title}!</p>
+            <div className="chat-title-wrapper">
+              <svg 
+                className="chat-title-icon" 
+                width="20" 
+                height="20" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth="2" 
+                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                />
+              </svg>
+              <h3 className="chat-title">Chat with AI</h3>
+            </div>
+
+            {messages.length === 0 && (
+              <div className="chat-welcome">
+                <p>
+                  Hi! I'm here to help you explore this movie. Ask me anything about{' '}
+                  <span className="chat-welcome-movie-title">{movie.title}</span>!
+                </p>
               </div>
+            )}
+            
+            <div className="chat-messages" ref={messagesContainerRef}>
+              {messages.map((msg, index) => (
+                <div key={index} className={`chat-message ${msg.role === 'user' ? 'user-message' : 'ai-message'} ${msg.isError ? 'error-message' : ''}`}>
+                  <ReactMarkdown>
+                    {msg.role === 'assistant' && isTyping && index === messages.length - 1
+                      ? typingMessage
+                      : msg.content}
+                  </ReactMarkdown>
+                </div>
+              ))}
+
+              {sendMessageMutation.isPending && (
+                <div className="chat-message ai-message loading-message">
+                  <div className="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+              )}
+              
             </div>
 
             <form onSubmit={handleSendMessage} className="chat-input-form">
@@ -268,9 +371,14 @@ const MovieDetail = () => {
                 onChange={(e) => setChatMessage(e.target.value)}
                 placeholder="Ask about this movie..."
                 className="chat-input"
+                // disabled={sendMessageMutation.isPending}
               />
-              <button type="submit" className="chat-send-btn" disabled={!chatMessage.trim()}>
-                <Send size={18} />
+              <button 
+                type="submit" 
+                className="chat-send-btn" 
+                disabled={!chatMessage.trim() || sendMessageMutation.isPending}
+              >
+                <Send size={20} />
               </button>
             </form>
 
@@ -280,7 +388,8 @@ const MovieDetail = () => {
                 <button 
                   key={index}
                   className="quick-question-btn"
-                  onClick={() => setChatMessage(question)}
+                  onClick={() => handleQuickQuestion(question)}
+                  disabled={sendMessageMutation.isPending}
                 >
                   {question}
                 </button>

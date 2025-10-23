@@ -4,12 +4,12 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from .viewsets import (GenreViewSet, MovieViewSet, MovieSectionViewSet, ChatViewSet)
 from .auth_views import (register, login, logout, update_profile, user_profile)
 from . import views as legacy_views
+from . import chat_views
 
 router = DefaultRouter()
 router.register(r'genres', GenreViewSet, basename = 'genre')
 router.register(r'movies', MovieViewSet, basename = 'movie')
 router.register(r'sections', MovieSectionViewSet, basename = 'section')
-router.register(r'chat', ChatViewSet, basename = 'chat')
 
 
 urlpatterns = [
@@ -21,6 +21,8 @@ urlpatterns = [
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/profile/', user_profile, name='user_profile'),
     path('auth/profile/update/', update_profile, name='update_profile'),
+    
+    path('chat/send/', chat_views.send_chat_message, name='chat_send'),
     
     path('import-movie/', legacy_views.import_movie, name='api_import_movie'),
     path('generate-section/', legacy_views.generate_section, name='api_generate_section'),

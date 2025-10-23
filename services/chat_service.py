@@ -2,7 +2,7 @@ import openai
 from django.conf import settings
 from services.rag_service import RAGService
 import logging
-
+import re
 logger = logging.getLogger(__name__)
 
 
@@ -12,7 +12,9 @@ class ChatService:
             base_url="https://openrouter.ai/api/v1",
             api_key=settings.OPENROUTER_API_KEY
         )
-        self.model = "deepseek/deepseek-chat-v3.1:free"
+        # self.model = "deepseek/deepseek-chat-v3.1:free"
+        self.model = "meta-llama/llama-3.3-8b-instruct:free"
+
         self.rag = RAGService()
     
     def chat(self, user_message, movie_id=None):
@@ -82,6 +84,11 @@ Answer based STRICTLY on this context."""
             )
             
             answer = response.choices[0].message.content.strip()
+            
+            answer = re.sub(r'<[｜|][^>]*[｜|]>', '', answer)
+            answer = re.sub(r'</?s>', '', answer)
+            answer = re.sub(r'<</?SYS>>', '', answer)
+            answer = answer.strip()
             
             sentences = answer.split('. ')
             if len(sentences) > 6:
