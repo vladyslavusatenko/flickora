@@ -107,13 +107,20 @@ const MovieDetail = () => {
   };
 
   const handleQuickQuestion = (question) => {
-    setChatMessage(question);
-  };
+  if (!sendMessageMutation.isPending) {
+    const userMessage = {
+      role: 'user',
+      content: question
+    };
+    setMessages(prev => [...prev, userMessage]);
+    sendMessageMutation.mutate(question);
+  }
+};
 
   const quickQuestions = [
-    "What's the meaning behind the spinning top?",
-    "Explain the dream levels in this movie",
-    "What are some hidden details I might have missed?"
+    "What are the main themes?",
+    "Tell me about the characters",
+    "What's the significance of the ending?"
   ];
 
   useEffect(() => {
